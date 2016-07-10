@@ -221,7 +221,7 @@ class TimerThread extends Thread {
         this.playedTimeLabel.setText(String.format("%02d:%02d", value / 60, value % 60));
         this.lyricPanel.repaint(value);
         try {
-          Thread.sleep(500);
+          Thread.sleep(30);
         } catch (InterruptedException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();

@@ -51,8 +51,9 @@ public class LyricPanel extends JPanel {
   private boolean lrcLoaded = false;
   private boolean imgLoaded = false;
   private float[] opacity = new float[11];
+  private int durationCentisec;
 		  
-  /** Time stored in millisecond */
+  /** Time stored in centisecond */
   private int[] timeLinesArray;
   /** Lyric corresponds to timelinesArray index*/
   private String[] lrcLinesArray;
@@ -87,6 +88,7 @@ public class LyricPanel extends JPanel {
 	  lyricBox.setText("Hahaha");
 	  this.lyricPanel.add(lyricBox);
 
+
 	  {
 	  opacity[0] = (float) 0.1 ; 
 	  opacity[1] = (float) 0.2 ; 
@@ -120,7 +122,6 @@ public class LyricPanel extends JPanel {
 	  String imgName = songName.substring(0, songName.length()-3)+"jpg";
 	  
 	  BufferedImage backgroudImg;
-
 	  try {
 		  backgroudImg = ImageIO.read(new File(imgName));
 //		  imgLabel.setIcon(new ImageIcon(backgroudImg));
@@ -143,11 +144,12 @@ public class LyricPanel extends JPanel {
   }
   
   
-  
-  
- 
+  /**
+   * Return a resized image that match the size of the lyric panel
+   * @param BufferedImage backgroudImg
+   * @return BufferedImage resizedImg
+   */
   private BufferedImage resizeImg(BufferedImage backgroudImg) {
-	 
 	  ImageIcon originImg;
 	  // Resize the image  
 //	  http://stackoverflow.com/questions/6714045/how-to-resize-jlabel-imageicon
@@ -175,7 +177,9 @@ public class LyricPanel extends JPanel {
    * Load lyrics to timeLineArray and lrcLineArray
    */
   void loadLrcFile(){
-
+	  // Get the total duration in Centisec
+	  durationCentisec = (int) player.audioProperty.getDuration()/10000;
+	  
 	  // Get the lrc file, currently only support lrc with same name
 	  String songName = player.getAudioPath();
 //	  String songName = "./music/王菲-匆匆那年.mp3";
@@ -195,8 +199,8 @@ public class LyricPanel extends JPanel {
 				String timeStr = line.substring(0,10).substring(1, 9);
 				int minute = Integer.parseInt(timeStr.substring(0, 2));
 				int second = Integer.parseInt(timeStr.substring(3, 5));
-				int millisec = Integer.parseInt(timeStr.substring(6,8));
-				int time = (minute * 60 + second ) * 1000 + millisec;
+				int centisec = Integer.parseInt(timeStr.substring(6,8));
+				int time = (minute * 60 + second ) * 100 + centisec;
 				timeLines.add(time);
 				lrcLines.add(line.substring(10));
 			}
@@ -219,34 +223,32 @@ public class LyricPanel extends JPanel {
 	  lrcLoaded = true;
 	  	  
   }
+  
+  /**
+   *  Repaint the lyric, called by TimerThread in ControllerPanel.
+   * @param currentSecond
+   */
   void repaint(int currentSecond){
-	  int curFrame = this.player.getCurrentFrame();
-	  int totalFrame = this.player.getTotalFrames();
-//	  if (totalFrame >= curFrame && curFrame >= 0) {		  
-//	  }
-
 	  if ( ! imgLoaded ) loadImage();
 	  if ( ! lrcLoaded ) loadLrcFile();
 	  
 	  if (!useDefaultLyrics ){
-		  int currentMillisec = currentSecond*1000;
+		  int curFrame = this.player.getCurrentFrame();
+		  int totalFrame = this.player.getTotalFrames();
+//		  System.out.println("curFrame: " + curFrame);
+//		  System.out.println("TotalFrame: " + totalFrame);
+		  int currentCentisec = (int) ( curFrame * 1.0 / totalFrame * durationCentisec);
+//		  System.out.println("currentCentisec: " + currentCentisec);
+		  
+		  
+//		  if (totalFrame >= curFrame && curFrame >= 0) { }
+
 		  // find the largest number in timeLineArray that is smaller than currentMillisec
 		  int currentLine = 0;
 		  for (int i = 0 ; i < timeLinesArray.length; i++ ){
-			  if (timeLinesArray[i] > currentMillisec ) {
-				  break;
-			  }
+			  if (timeLinesArray[i] > currentCentisec )   break;
 			  currentLine = i;
 		  }
-		  
-//		  System.out.println("curFrame: " + curFrame);
-//		  System.out.println("curFrame: " + curFrame);
-//		  System.out.println("bounds:"+this.getHeight()*curFrame/totalFrame);
-//		  System.out.println("this.getWidth() " + this.getWidth());
-//		  System.out.println("this.lyricBox.getWidth() " + this.lyricBox.getWidth());
-//		  this.lyricBox.setSize(new Dimension(this.getWidth()-30 ,100));
-//		  this.lyricBox.setBounds(15,this.getHeight()*curFrame/totalFrame ,this.getWidth()-30,300);
-		  this.lyricBox.setBounds(15,20 ,this.getWidth()-30,this.getHeight()-40);
 		  
 		  
 		  String output = "<html>";
@@ -265,6 +267,18 @@ public class LyricPanel extends JPanel {
 //		  System.out.println("String " + output );
 		  
 		  this.lyricBox.setText(output);
+		  
+		 
+		  // TODO Set the position of lyric box to let it float
+		  int timeDisplay = timeLinesArray[currentLine+1] - timeLinesArray[currentLine];
+		  int timePass = currentCentisec - timeLinesArray[currentLine];
+		  int pxAdjust =(int) ( ( (double) timePass/timeDisplay - 0.5 )*40 );
+		  
+//		  System.out.println("((double) timePass)/(double) timeDisplay " + ((double) timePass)/(double) timeDisplay );
+//		  System.out.println("pxAdjust " + pxAdjust);
+		  
+		  this.lyricBox.setBounds(15, 20 - pxAdjust  ,this.getWidth()-30,this.getHeight() - 40 );
+//		  this.lyricBox.setBounds(0, 100 + pxAdjust, 100, 100);
 		  
 //		  this.lyricBox.setText(lrcLinesArray[currentLine]);
 //		  lyricBox.setBounds(0, 0, 216, 400);
