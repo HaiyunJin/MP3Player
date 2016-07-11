@@ -1,10 +1,9 @@
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
@@ -23,11 +22,9 @@ import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
@@ -125,7 +122,10 @@ public class LyricPanel extends JPanel {
 	  try {
 		  backgroudImg = ImageIO.read(new File(imgName));
 //		  imgLabel.setIcon(new ImageIcon(backgroudImg));
+//		  imgLabel.setBackground(new Color(0x000000));
+//		  imgLabel.setForeground(new Color(0xffffff));
 		  imgLabel.setIcon(new ImageIcon(resizeImg(backgroudImg)));
+
 		 
 	  } catch (IOException e) {
 		  try {
@@ -159,14 +159,13 @@ public class LyricPanel extends JPanel {
 	  // 1. Create a new Buffered Image and Graphic2D object
 	  BufferedImage resizedImg = new BufferedImage(width, height,BufferedImage.TYPE_INT_RGB);
 	  Graphics2D g2 = resizedImg.createGraphics();	
-//	  System.out.println("width "+imgLabel.getWidth());
-//	  System.out.println("height "+imgLabel.getHeight());
-//	  System.out.println("panel width "+imgPanel.getWidth());
-//	  System.out.println("panel height "+imgPanel.getHeight());
 	  
 	  // 2. Use the Graphic object to draw a new image to the image in the buffer
 	  g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 	  g2.drawImage(backgroudImg, 0, 0, width, height, null);
+	  
+	  g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_IN, 0.1f));
+	  
 	  g2.dispose();
 	  // 3. Convert the buffered image into an ImageIcon for Label
 	  return resizedImg;
@@ -206,6 +205,8 @@ public class LyricPanel extends JPanel {
 			}
 		}
 		reader.close();
+		timeLines.add(durationCentisec+1);
+		lrcLines.add("");
 		// Copy lyrics to array for quicker access
 		lrcLinesArray = new String[lrcLines.size()];
 		timeLinesArray = new int[lrcLines.size()];
@@ -255,9 +256,15 @@ public class LyricPanel extends JPanel {
 		  for (int i = - 5 ; i <  6 ; i ++ )
 			  if ( currentLine + i >= 0 && currentLine + i <lrcLinesArray.length )	{
 				  if ( i == 0) {
-					  output += String.format("<center><font color=blue style=\"font-size:40px;\">%s</font></center><br />",lrcLinesArray[currentLine + i]);
+//					  output += String.format("<center><font color=purple style=\"font-size:40px;\">%s</font></center><br/>",lrcLinesArray[currentLine + i]);
+					  output += String.format("<center><font color=\"#ff22ff\" style=\"font-size:40px;\">%s</font></center><br/>",lrcLinesArray[currentLine + i]);
+//					  output += String.format("<center><div style=\"color: rgba(0, 0, 0, .5)\"> This text color is black, but opacity of 0.5 makes it look grey.</div></center>");
+					  
 				  } else{
-					  output += String.format("<center><font color=red style=\"opacity:%.1f;\">%s</font></center><br />", opacity[i+5],lrcLinesArray[currentLine + i]);
+					  output += String.format("<center><font color=red style=\"opacity:%.1f;\">%s</font></center><br/>", opacity[i+5],lrcLinesArray[currentLine + i]);
+//					  output += String.format("<center><div style=\"color: rgba(255, 0, 0, :%.1f)\">%s</div></center><br/>", opacity[i+5],lrcLinesArray[currentLine + i]);
+//					  output += String.format("<center><font color=red ><font style=\"opacity:%.1f\">%s</font></font></center><br/>", opacity[i+5],lrcLinesArray[currentLine + i]);
+					  
 				  }
 			  } else {
 				  output += String.format("<center></center><br />");
@@ -268,17 +275,12 @@ public class LyricPanel extends JPanel {
 		  
 		  this.lyricBox.setText(output);
 		  
-		 
 		  // TODO Set the position of lyric box to let it float
 		  int timeDisplay = timeLinesArray[currentLine+1] - timeLinesArray[currentLine];
 		  int timePass = currentCentisec - timeLinesArray[currentLine];
 		  int pxAdjust =(int) ( ( (double) timePass/timeDisplay - 0.5 )*40 );
 		  
-//		  System.out.println("((double) timePass)/(double) timeDisplay " + ((double) timePass)/(double) timeDisplay );
-//		  System.out.println("pxAdjust " + pxAdjust);
-		  
-		  this.lyricBox.setBounds(15, 20 - pxAdjust  ,this.getWidth()-30,this.getHeight() - 40 );
-//		  this.lyricBox.setBounds(0, 100 + pxAdjust, 100, 100);
+		  this.lyricBox.setBounds(15, 20 - pxAdjust  ,this.getWidth()-30,this.getHeight() - 30 );
 		  
 //		  this.lyricBox.setText(lrcLinesArray[currentLine]);
 //		  lyricBox.setBounds(0, 0, 216, 400);
